@@ -1,64 +1,55 @@
-const request = require('request')
+const request = require('request');
 
-const createRequest = (input, callback) => {
-  let url = 'https://api.worldtradingdata.com/api/v1/'
-  // Including an endpoint parameter is optional but common since
-  // different endpoints of the same API typically respond with
-  // data structured different from one another
-  const endpoint = input.data.endpoint || 'stock'
-  // Include a trailing slash '/' in your url if endpoint is in use
-  // and part of the URL
-  url = url + endpoint
+//All API Constants
+const apiToken = process.env.API_KEY;
+const apiEndpoint = 'https://api.worldtradingdata.com/api/v1/';
+const stockEndpoint = `${apiEndpoint}stock`;
+const defaultStockSymbols = [
+  'SNAP',
+  'TWTR',
+  'VOD.L'
+];
 
-  // Create additional input params here, for example:
-  const stockSymbol = input.data.stockSymbol || 'stock symbol'
-
-
-  // Build your query object with the given input params, for example:
-  const queryObj = {
-    symbol: stockSymbol,
-    api_token: process.env.API_KEY
-  
-  }
-
-  // Use this to clean up unused input parameters
-  for (const key in queryObj) {
-    if (queryObj[key] === '') {
-      delete queryObj[key]
-    }
-  }
+const createRequest = (req, callback) => {
+  // Get stockSymbol Query String Parameter from GET Request or use Default Stock Symbols
+  var stockSymbol = req.query.stockSymbols || defaultStockSymbols.join(',');
+  console.log(`Stock Symbols to use: ${stockSymbol}`);
 
   const options = {
-    url: url,
-    // Change the API_KEY key name to the name specified by the API
-    // Note: If the API only requires a request header to be specified
-    // for authentication, you can place this in the job's specification
-    // instead of writing an external adapter
-    /*
-    headers: {
-      'API_KEY': process.env.API_KEY
+    url: stockEndpoint,
+    qs: {
+      api_token: apiToken,
+      symbol: stockSymbol
     },
-    */
-    qs: queryObj,
     json: true
   }
   request(options, (error, response, body) => {
-    // Add any API-specific failure case here to pass that error back to Chainlink
-    if (error || response.statusCode >= 400) {
-      callback(response.statusCode, {
-        jobRunID: input.id,
-        status: 'errored',
-        error: body,
-        statusCode: response.statusCode
-      })
-    } else {
-      callback(response.statusCode, {
-        jobRunID: input.id,
-        data: body,
-        statusCode: response.statusCode
-      })
+    if(!error){
+      if (error || response.statusCode >= 400) {
+        callback({
+          jobRunID: null /*input.id leaving as null for now*/,
+          status: 'error',
+          error: body,
+          statusCode: response.statusCode == 200? 500: response.statusCode
+        })
+      } else {
+        callback({
+          jobRunID: null /*input.id leaving as null for now*/,
+          data: body,
+          statusCode: response.statusCode
+        })
+      }
+    }else{
+      callback({
+        jobRunID: null,
+        status: 'error',
+        error: 'API Call Failed',
+        statusCode: 500
+      });
+      console.error(error);
     }
-  })
+
+  });
 }
 
 // This is a wrapper to allow the function to work with
