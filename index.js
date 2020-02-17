@@ -1,25 +1,24 @@
 const request = require('request')
 
 const createRequest = (input, callback) => {
-  let url = 'https://min-api.cryptocompare.com/data/'
+  let url = 'https://api.worldtradingdata.com/api/v1/'
   // Including an endpoint parameter is optional but common since
   // different endpoints of the same API typically respond with
   // data structured different from one another
-  const endpoint = input.data.endpoint || 'price'
+  const endpoint = input.data.endpoint || 'stock'
   // Include a trailing slash '/' in your url if endpoint is in use
   // and part of the URL
   url = url + endpoint
 
   // Create additional input params here, for example:
-  const coin = input.data.coin || 'ETH'
-  const market = input.data.market || 'USD'
+  const stockSymbol = input.data.stockSymbol || 'stock symbol'
+
 
   // Build your query object with the given input params, for example:
   const queryObj = {
-    fsym: coin,
-    fsyms: coin,
-    tsym: market,
-    tsyms: market
+    symbol: stockSymbol,
+    api_token: process.env.API_KEY
+  
   }
 
   // Use this to clean up unused input parameters
