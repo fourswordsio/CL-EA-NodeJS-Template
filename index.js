@@ -1,3 +1,7 @@
+//Import Global
+const global = require('./global');
+
+//Import Request Node Module
 const request = require('request');
 
 //All API Constants
@@ -11,9 +15,9 @@ const defaultStockSymbols = [
 ];
 
 const createRequest = (req, callback) => {
-  // Get stockSymbol Query String Parameter from GET Request or use Default Stock Symbols
-  var stockSymbol = req.query.stockSymbols || defaultStockSymbols.join(',');
-  console.log(`Stock Symbols to use: ${stockSymbol}`);
+  // Get stockSymbol property from request body if provided, otherwise use defaults.
+  var stockSymbol = req.body.data.stockSymbols? req.body.data.stockSymbols.join(',') : defaultStockSymbols.join(',');
+  global.setLogMessage(`Stock Symbols to use: ${stockSymbol}`);
 
   const options = {
     url: stockEndpoint,
@@ -23,30 +27,35 @@ const createRequest = (req, callback) => {
     },
     json: true
   }
+  global.setLogMessage(`Send API Request to ${options.url}`);
+
   request(options, (error, response, body) => {
     if(!error){
       if (error || response.statusCode >= 400) {
-        callback({
-          jobRunID: null /*input.id leaving as null for now*/,
+        callback(response.statusCode, {
+          jobRunID: req.body.id,
           status: 'error',
           error: body,
           statusCode: response.statusCode == 200? 500: response.statusCode
-        })
+        });
+        global.setLogMessage(response, true);
       } else {
-        callback({
-          jobRunID: null /*input.id leaving as null for now*/,
+        callback(200, {
+          jobRunID: req.body.id,
           data: body,
           statusCode: response.statusCode
-        })
+        });
+        global.setLogMessage(response);
       }
     }else{
-      callback({
-        jobRunID: null,
+      callback(500, {
+        jobRunID: req.body.id,
         status: 'error',
-        error: 'API Call Failed',
+        error: `API Call Failed: ${error}`,
         statusCode: 500
       });
-      console.error(error);
+      global.setLogMessage(`API Call to ${options.url} Failed!`, true);
+      global.setLogMessage(response, true);
     }
 
   });

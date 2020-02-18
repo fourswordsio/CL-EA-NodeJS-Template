@@ -7,12 +7,15 @@ describe('createRequest', () => {
 
   context('when specifying a coin and market', () => {
     // Update the parameters in the data to match actual requests for the target API
-    const req = {
+    const req = {};
+    req.body = {
       id: jobID,
       data: {
-        endpoint: 'pricemulti',
-        coin: 'BTC',
-        market: 'EUR'
+        stockSymbols: [
+          'SNAP',
+          'TWTR',
+          'VOD.L'
+        ]
       }
     }
 
@@ -21,14 +24,15 @@ describe('createRequest', () => {
         assert.equal(statusCode, 200)
         assert.equal(data.jobRunID, jobID)
         assert.isNotEmpty(data.data)
-        done()
+        done();
       })
     })
   })
 
   context('when using default parameters', () => {
     // Update the parameters in the data to match actual requests for the target API
-    const req = {
+    const req = {};
+    req.body = {
       id: jobID,
       data: {}
     }

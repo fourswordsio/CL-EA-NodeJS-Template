@@ -1,6 +1,8 @@
-require('dotenv').config();
-const createRequest = require('./index').createRequest
+//Import Global
+const global = require('./global');
 
+//Setup Constants
+const createRequest = require('./index').createRequest
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
@@ -8,22 +10,21 @@ const port = process.env.PORT || 8080
 
 app.use(bodyParser.json())
 
-app.post('/', (req, res) => {
-  console.log('POST Data: ', req.body)
-  createRequest(req.body, (status, result) => {
-    console.log('Result: ', result)
-    res.status(status).json(result)
-  })
+///stock POST Endpoint
+//Required Parameters are id and data.stockSymbols is optional.
+app.post('/stock', (req, res) => {
+  console.log('POST to /stock Received ', req);
+  global.logger.info('POST to /stock Received ', req);
+  if(id){
+    createRequest(req, (status, result) => {
+      res.status(status).json(result);
+    });
+  }else{
+    res.status(500).json({error:'Please provide Job Run ID as id in body of request.'});
+  }
+
 });
 
-//Stock Endpoint
-app.get('/stock', (req, res) => {
-  /*
-  Accepts stockSymbols QS Param as String; ex: stockSymbols=SNAP,TWTR
-  */
-  createRequest(req, (result) => {
-    res.json(result);
-  })
+app.listen(port, ()=> {
+  global.logger.info(`Server Started! Listening on port ${port}!`);
 });
-
-app.listen(port, () => console.log(`Listening on port ${port}!`))
